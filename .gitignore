@@ -1,5 +1,12 @@
 node_modules/
-.env
 dist/
 .DS_Store
 *.log
+
+# Environment files with secrets
+backend/.env
+.env.local
+.env.*.local
+
+# Keep frontend .env.production (no secrets, just API URL)
+# !frontend/.env.production

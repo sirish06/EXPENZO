@@ -12,14 +12,25 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URLS = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map(url => url.trim());
 
-const io = new Server(server, {
-  cors: {
-    origin: FRONTEND_URL,
-    methods: ['GET', 'POST']
-  }
-});
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (FRONTEND_URLS.some(url => origin === url || origin.endsWith('.vercel.app'))) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Be permissive in production for now
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+};
+
+const io = new Server(server, { cors: corsOptions });
 
 app.set('io', io);
 
@@ -40,7 +51,7 @@ io.on('connection', (socket) => {
   });
 });
 
-app.use(cors({ origin: FRONTEND_URL, credentials: true }));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
